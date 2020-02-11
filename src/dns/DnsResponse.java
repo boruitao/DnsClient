@@ -51,15 +51,15 @@ public class DnsResponse {
 			System.out.println("NOTFOUND");
 		} else {
 			System.out.println("***Answer Section (" + ancount + " records)***");
-			for(DnsAnswer an : this.answers) {
+			for (DnsAnswer an : this.answers) {
 				System.out.println(an.getOutput());
 			}
 			System.out.println("");
-			if(arcount > 0) {
+			if (arcount > 0) {
 				System.out.println("***Additional Section (" + arcount + " records)***");
-	            for (DnsAnswer an : this.additionals){
-	            	System.out.println(an.getOutput());
-	            }
+				for (DnsAnswer an : this.additionals) {
+					System.out.println(an.getOutput());
+				}
 			}
 		}
 

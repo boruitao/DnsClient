@@ -120,7 +120,7 @@ public class DnsAnswer {
 				index += wordlen + 1;
 				wordlen = answer[index];
 			} else {
-				int pointer = (answer[index] & 0x3F) << 8 | answer[index];
+				int pointer = (answer[index] & 0x3F) << 8 | answer[index+1];
 				getServerNameFromIndex(pointer, answer);
 				name += this.TMPNAME;
 				index += 2;

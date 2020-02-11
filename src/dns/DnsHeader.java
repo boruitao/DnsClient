@@ -23,8 +23,6 @@ public class DnsHeader {
 		this.ARCOUNT = arcount;
 		this.header = getHeader(this.ID, this.QR, this.OPCODE, this.AA, this.TC, this.RD, this.RA, this.Z, this.RCODE,
 				this.QDCOUNT, this.ANCOUNT, this.NSCOUNT, this.ARCOUNT);
-		// this.header = getHeader(id, qr, opcode, aa, tc, rd, ra, z, rcode, qdcount,
-		// ancount, nscount, arcount);
 	}
 
 	public byte[] getHeader(short id, byte qr, byte opcode, byte aa, byte tc, byte rd, byte ra, byte z, byte rcode,
@@ -50,10 +48,14 @@ public class DnsHeader {
 	}
 
 	public void parseHeader(byte[] header) {
+//		for(int i = 0;i <header.length; i++) {
+//			System.out.println(header[i]);
+//		}
+		
 		this.ID = (short) ((header[0] << 8) | header[1]);
-
+		
 		this.QR = (byte) ((header[2] >> 7) & 1);
-		if(this.QR == 0) {
+		if (this.QR == 0) {
 			throw new RuntimeException("ERROR\tUnexpected response: this message is not a response.");
 		}
 		this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
@@ -64,7 +66,18 @@ public class DnsHeader {
 		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
 		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
 		validateRCode();
-
+//
+//		System.out.println("");
+//		System.out.println(ID);
+//		System.out.println(QR);
+//		System.out.println(OPCODE);
+//		System.out.println(AA);
+//		System.out.println(TC);
+//		System.out.println(RD);
+//		System.out.println(RA);
+//		System.out.println(Z);
+//		System.out.println(RCODE);
+		
 		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
 		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
 		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
@@ -89,19 +102,19 @@ public class DnsHeader {
 					"Refused: the name server refuses to perform the requested operation for policy reasons");
 		}
 	}
-	
+
 	public short getANCOUNT() {
 		return this.ANCOUNT;
 	}
-	
+
 	public short getNSCOUNT() {
 		return this.NSCOUNT;
 	}
-	
+
 	public short getARCOUNT() {
 		return this.ARCOUNT;
 	}
-	
+
 	public byte getAA() {
 		return this.AA;
 	}

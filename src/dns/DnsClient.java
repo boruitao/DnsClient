@@ -98,6 +98,8 @@ public class DnsClient {
 				int questionSize = question.getQuestion().length;
 
 				ByteBuffer requestData = ByteBuffer.allocate(headerSize + questionSize);
+				requestData.put(packetHeader.getHeader());
+				requestData.put(question.getQuestion());
 				byte[] responseData = new byte[MAX_DNS_PACKET_SIZE];
 
 				DatagramPacket sentPacket = new DatagramPacket(requestData.array(), requestData.array().length,
@@ -112,7 +114,7 @@ public class DnsClient {
 
 				double deltaTime = (endTime - startTime) / 1000.;
 				System.out
-						.println("Response received after " + deltaTime + " seconds (" + (retryNum - 1) + " retries)");
+						.println("Response received after " + deltaTime + " seconds (" + (retryNum-1) + " retries)");
 
 				byte[] receivedHeader = Arrays.copyOfRange(receivedPacket.getData(), 0, headerSize);
 				byte[] receivedQuestion = Arrays.copyOfRange(receivedPacket.getData(), headerSize,
@@ -120,7 +122,7 @@ public class DnsClient {
 
 				packetHeader.parseHeader(receivedHeader);
 				question.parseQuestion(receivedQuestion);
-				if (question.getQTYPE().equals(serverType)) {
+				if (!question.getQTYPE().equals(serverType)) {
 					throw new RuntimeException("ERROR\tResponse query is not consistent with the original request");
 				}
 
@@ -131,8 +133,8 @@ public class DnsClient {
 				System.out.println("ERROR\tFailed to create the socket");
 			} catch (SocketTimeoutException e) {
 				System.out.println("ERROR\tTimeout occurred");
-				System.out.println("Retrying the original request (" + (--retryNum) + " retries left) ... ");
-				tryDnsRequest(retryNum);
+				System.out.println("Retrying the original request (" + (maxRetries-retryNum-1) + " retries left) ... ");
+				tryDnsRequest(++retryNum);
 			} catch (IOException e) {
 				System.out.println("ERROR\tThe DNS packet wasn't successfully received");
 			}
