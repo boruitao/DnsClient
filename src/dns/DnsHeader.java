@@ -1,29 +1,30 @@
 package dns;
 
 public class DnsHeader {
-//	private short ID;
-//	private byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
-//	private short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
+	private short ID;
+	private byte QR, OPCODE, AA, TC, RD, RA, Z, RCODE;
+	private short QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT;
 	private byte[] header;
 
 	public DnsHeader(short id, byte qr, byte opcode, byte aa, byte tc, byte rd, byte ra, byte z, byte rcode,
 			short qdcount, short ancount, short nscount, short arcount) {
-//		this.ID = id;
-//		this.QR = qr;
-//		this.OPCODE = opcode;
-//		this.AA = aa;
-//		this.TC = tc;
-//		this.RD = rd;
-//		this.RA = ra;
-//		this.Z = z;
-//		this.RCODE = rcode;
-//		this.QDCOUNT = qdcount;
-//		this.ANCOUNT = ancount;
-//		this.NSCOUNT = nscount;
-//		this.ARCOUNT = arcount;
-//		this.header = getHeader(this.ID, this.QR, this.OPCODE, this.AA, this.TC, this.RD, this.RA, this.Z, this.RCODE,
-//				this.QDCOUNT, this.ANCOUNT, this.NSCOUNT, this.ARCOUNT);
-		this.header = getHeader(id, qr, opcode, aa, tc, rd, ra, z, rcode, qdcount, ancount, nscount, arcount);
+		this.ID = id;
+		this.QR = qr;
+		this.OPCODE = opcode;
+		this.AA = aa;
+		this.TC = tc;
+		this.RD = rd;
+		this.RA = ra;
+		this.Z = z;
+		this.RCODE = rcode;
+		this.QDCOUNT = qdcount;
+		this.ANCOUNT = ancount;
+		this.NSCOUNT = nscount;
+		this.ARCOUNT = arcount;
+		this.header = getHeader(this.ID, this.QR, this.OPCODE, this.AA, this.TC, this.RD, this.RA, this.Z, this.RCODE,
+				this.QDCOUNT, this.ANCOUNT, this.NSCOUNT, this.ARCOUNT);
+		// this.header = getHeader(id, qr, opcode, aa, tc, rd, ra, z, rcode, qdcount,
+		// ancount, nscount, arcount);
 	}
 
 	public byte[] getHeader(short id, byte qr, byte opcode, byte aa, byte tc, byte rd, byte ra, byte z, byte rcode,
@@ -46,5 +47,62 @@ public class DnsHeader {
 
 	public byte[] getHeader() {
 		return this.header;
+	}
+
+	public void parseHeader(byte[] header) {
+		this.ID = (short) ((header[0] << 8) | header[1]);
+
+		this.QR = (byte) ((header[2] >> 7) & 1);
+		if(this.QR == 0) {
+			throw new RuntimeException("ERROR\tUnexpected response: this message is not a response.");
+		}
+		this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
+		this.AA = (byte) ((header[2] >> 2) & 1);
+		this.TC = (byte) ((header[2] >> 1) & 1);
+		this.RD = (byte) (header[2] & 1);
+		this.RA = (byte) ((header[3] >> 7) & 1);
+		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
+		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
+		validateRCode();
+
+		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
+		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
+		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
+		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
+	}
+
+	private void validateRCode() {
+		switch (this.RCODE) {
+		case 0:
+			break;
+		case 1:
+			throw new RuntimeException("Format error: the name server was unable to interpret the query");
+		case 2:
+			throw new RuntimeException(
+					"Server failure: the name server was unable to process this query due to a problem with the name server");
+		case 3:
+			throw new RuntimeException("The domain name referenced in the query does not exist");
+		case 4:
+			throw new RuntimeException("Not implemented: the name server does not support the requested kind of query");
+		case 5:
+			throw new RuntimeException(
+					"Refused: the name server refuses to perform the requested operation for policy reasons");
+		}
+	}
+	
+	public short getANCOUNT() {
+		return this.ANCOUNT;
+	}
+	
+	public short getNSCOUNT() {
+		return this.NSCOUNT;
+	}
+	
+	public short getARCOUNT() {
+		return this.ARCOUNT;
+	}
+	
+	public byte getAA() {
+		return this.AA;
 	}
 }

@@ -92,11 +92,12 @@ public class DnsClient {
 				Random id = new Random(Short.MAX_VALUE + 1);
 				DnsHeader packetHeader = new DnsHeader((short) id.nextInt(), (byte) 0, (byte) 0, (byte) 0, (byte) 0,
 						(byte) 1, (byte) 0, (byte) 0, (byte) 0, (short) 1, (short) 0, (short) 0, (short) 0);
+				int headerSize = packetHeader.getHeader().length;
 
 				DnsQuestion question = new DnsQuestion(name, serverType);
+				int questionSize = question.getQuestion().length;
 
-				ByteBuffer requestData = ByteBuffer
-						.allocate(packetHeader.getHeader().length + question.getQuestion().length);
+				ByteBuffer requestData = ByteBuffer.allocate(headerSize + questionSize);
 				byte[] responseData = new byte[MAX_DNS_PACKET_SIZE];
 
 				DatagramPacket sentPacket = new DatagramPacket(requestData.array(), requestData.array().length,
@@ -113,6 +114,19 @@ public class DnsClient {
 				System.out
 						.println("Response received after " + deltaTime + " seconds (" + (retryNum - 1) + " retries)");
 
+				byte[] receivedHeader = Arrays.copyOfRange(receivedPacket.getData(), 0, headerSize);
+				byte[] receivedQuestion = Arrays.copyOfRange(receivedPacket.getData(), headerSize,
+						headerSize + questionSize);
+
+				packetHeader.parseHeader(receivedHeader);
+				question.parseQuestion(receivedQuestion);
+				if (question.getQTYPE().equals(serverType)) {
+					throw new RuntimeException("ERROR\tResponse query is not consistent with the original request");
+				}
+
+				DnsResponse response = new DnsResponse(receivedPacket.getData(), packetHeader, question,
+						headerSize + questionSize);
+				response.printResponseOutput();
 			} catch (SocketException e) {
 				System.out.println("ERROR\tFailed to create the socket");
 			} catch (SocketTimeoutException e) {
@@ -130,7 +144,6 @@ public class DnsClient {
 	}
 
 	public InetAddress getServerIPAddress() {
-		// Create the InetAddress by converting the IP argument into 4 bytes
 		InetAddress serverIpAddress = null;
 		try {
 			String[] ipComponents = server.split("\\.");
@@ -143,10 +156,10 @@ public class DnsClient {
 			}
 			serverIpAddress = InetAddress.getByAddress(serverAddress);
 		} catch (UnknownHostException e) {
-			System.out.println("ERROR\tThe IP address cannot be resolved");
+			System.out.println("ERROR\tThe IP address cannot be resolved in the sender");
 
 		} catch (NullPointerException f) {
-			System.out.println("ERROR\tThe IpAddress is missing dotted-decimal entries");
+			System.out.println("ERROR\tThe IP Address is missing entries");
 		}
 		return serverIpAddress;
 	}

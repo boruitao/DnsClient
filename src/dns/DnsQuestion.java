@@ -4,7 +4,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 public class DnsQuestion {
-	private short QTYPE;
+	private short QTYPE, QCLASS;
+	private byte[] QNAME;
 	private byte[] question;
 
 	public DnsQuestion(String qname, String qtype) {
@@ -47,5 +48,28 @@ public class DnsQuestion {
 
 	public byte[] getQuestion() {
 		return this.question;
+	}
+
+	public void parseQuestion(byte[] question) {
+		int len = question.length;
+		ByteBuffer qnameByte = ByteBuffer.allocate(len - 4);
+		qnameByte.put(question, 0, len - 4);
+
+		this.QNAME = qnameByte.array();
+		this.QTYPE = (short) ((question[len - 4] << 8) | question[len - 3]);
+		// this.QCLASS = (short) ((question[len - 2] << 8) | question[len - 1]);
+	}
+
+	public String getQTYPE() {
+		switch (this.QTYPE) {
+		case 0x0001:
+			return "A";
+		case 0x0002:
+			return "NS";
+		case 0x000f:
+			return "MX";
+		default:
+			return "";
+		}
 	}
 }
