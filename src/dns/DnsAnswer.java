@@ -99,7 +99,7 @@ public class DnsAnswer {
 	private int setRDataMX(int index, byte[] answer) {
 		int preference = answer[index] << 8 | answer[index + 1];
 		this.PREFERENCE = preference;
-		index = getServerNameFromIndex(index, answer);
+		index = getServerNameFromIndex(index+2, answer);
 		this.RDATA = this.TMPNAME;
 		return index;
 	}
