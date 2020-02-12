@@ -57,7 +57,6 @@ public class DnsQuestion {
 
 		this.QNAME = qnameByte.array();
 		this.QTYPE = (short) ((question[len - 4] << 8) | question[len - 3]);
-		// this.QCLASS = (short) ((question[len - 2] << 8) | question[len - 1]);
 	}
 
 	public String getQTYPE() {

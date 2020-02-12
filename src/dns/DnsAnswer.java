@@ -2,6 +2,7 @@ package dns;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 public class DnsAnswer {
 	private String NAME, TMPNAME, RDATA;
@@ -40,22 +41,20 @@ public class DnsAnswer {
 			System.out.println("ERROR\tUnrecognized response type");
 		}
 
-		// get class:
+		// move to the next two bytes to get class:
 		index += 2;
 		if (dnsResponse[index] != 0 || dnsResponse[index + 1] != 1) {
 			throw new RuntimeException(("ERROR\tThe class field in the response is not 1"));
 		}
 
-		// get ttl:
+		// move to the next two bytes to get ttl:
 		index += 2;
-		this.TTL = dnsResponse[index] << 24 | dnsResponse[index + 1] << 16 | dnsResponse[index + 2] << 8
-				| dnsResponse[index + 3];
+		this.TTL = ByteBuffer.wrap(getByteArrFromIndex(index, 4, dnsResponse)).getInt();
 
-		// get rdlength:
+		// move to the next four bytes to get rdlength:
 		index += 4;
-		this.RDLENGTH = dnsResponse[index] << 8 | dnsResponse[index + 1];
-
-		// get rdata:
+		this.RDLENGTH = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
+		// move to the next two bytes get rdata:
 		index += 2;
 		switch (this.TYPE) {
 		case "A":
@@ -82,7 +81,7 @@ public class DnsAnswer {
 	}
 
 	private String getRDataA(int index, byte[] answers) {
-		String rdata = "";
+		String rdata = new String();
 		byte[] serverIp = new byte[4];
 		for (int i = 0; i < serverIp.length; i++) {
 			serverIp[i] = answers[index + i];
@@ -97,9 +96,9 @@ public class DnsAnswer {
 	}
 
 	private int setRDataMX(int index, byte[] answer) {
-		int preference = answer[index] << 8 | answer[index + 1];
+		int preference = ByteBuffer.wrap(getByteArrFromIndex(index, 2, answer)).getShort();
 		this.PREFERENCE = preference;
-		index = getServerNameFromIndex(index+2, answer);
+		index = getServerNameFromIndex(index + 2, answer);
 		this.RDATA = this.TMPNAME;
 		return index;
 	}
@@ -113,25 +112,28 @@ public class DnsAnswer {
 	}
 
 	public int getServerNameFromIndex(int index, byte[] answer) {
-		String name = "";
-		int wordlen = answer[index];
-		while (wordlen != 0) {
-			if (!((wordlen & 0xC0) == (int) 0xC0)) {
-				name += getComponentFromIndex(wordlen, index + 1, answer);
-				index += wordlen + 1;
-				wordlen = answer[index];
+		StringBuilder name = new StringBuilder();
+		int currByte = answer[index];
+		while (currByte != 0) {
+			if (!((currByte & 0xC0) == (int) 0xC0)) {
+				name.append(getComponentFromIndex(currByte, index + 1, answer));
+				index += currByte + 1;
+				currByte = answer[index];
 			} else {
-				int pointer = (answer[index] & 0x3F) << 8 | answer[index + 1];
+				byte[] pointerArr = new byte[2];
+				pointerArr[0] = (byte) (answer[index] & 0x3F);
+				pointerArr[1] = answer[index + 1];
+				int pointer = ByteBuffer.wrap(pointerArr).getShort();
 				getServerNameFromIndex(pointer, answer);
-				name += this.TMPNAME;
+				name.append(this.TMPNAME);
 				index += 2;
-				wordlen = 0;
+				currByte = 0;
 			}
-			if (wordlen != 0) {
-				name += ".";
+			if (currByte != 0) {
+				name.append(".");
 			}
 		}
-		this.TMPNAME = name;
+		this.TMPNAME = name.toString();
 		return index;
 	}
 
@@ -155,5 +157,13 @@ public class DnsAnswer {
 
 	public String getOutput() {
 		return this.output;
+	}
+
+	public byte[] getByteArrFromIndex(int index, int len, byte[] response) {
+		byte[] arr = new byte[len];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = response[index + i];
+		}
+		return arr;
 	}
 }

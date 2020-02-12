@@ -48,10 +48,6 @@ public class DnsHeader {
 	}
 
 	public void parseHeader(byte[] header) {
-//		for(int i = 0;i <header.length; i++) {
-//			System.out.println(header[i]);
-//		}
-
 		this.ID = (short) ((header[0] << 8) | header[1]);
 
 		this.QR = (byte) ((header[2] >> 7) & 1);
@@ -65,16 +61,6 @@ public class DnsHeader {
 		this.RA = (byte) ((header[3] >> 7) & 1);
 		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
 		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
-//		System.out.println("");
-//		System.out.println(ID);
-//		System.out.println(QR);
-//		System.out.println(OPCODE);
-//		System.out.println(AA);
-//		System.out.println(TC);
-//		System.out.println(RD);
-//		System.out.println(RA);
-//		System.out.println(Z);
-//		System.out.println(RCODE);
 
 		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
 		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
@@ -93,8 +79,6 @@ public class DnsHeader {
 			throw new RuntimeException(
 					"Server failure: the name server was unable to process this query due to a problem with the name server");
 		case 3:
-			// throw new RuntimeException("The domain name referenced in the query does not
-			// exist");
 			isCaseThree = true;
 		case 4:
 			throw new RuntimeException("Not implemented: the name server does not support the requested kind of query");
