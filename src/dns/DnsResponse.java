@@ -3,17 +3,22 @@ package dns;
 public class DnsResponse {
 	private byte[] dnsResponse;
 	private DnsHeader header;
-	private DnsQuestion question;
 	private DnsAnswer[] answers;
 	private DnsAnswer[] authorities;
 	private DnsAnswer[] additionals;
 	private int startIndex;
-	private static final int MAX_DNS_PACKET_SIZE = 512;
 
-	public DnsResponse(byte[] dnsResponse, DnsHeader receivedHeader, DnsQuestion receivedQuestion, int startIndex) {
+	/**
+	 * This class is used to parse the answer, authority, and the additional
+	 * sections. It creates each individual answer based on the response data.
+	 * 
+	 * @param dnsResponse
+	 * @param receivedHeader
+	 * @param startIndex
+	 */
+	public DnsResponse(byte[] dnsResponse, DnsHeader receivedHeader, int startIndex) {
 		this.dnsResponse = dnsResponse;
 		this.header = receivedHeader;
-		this.question = receivedQuestion;
 		this.startIndex = startIndex;
 		parseResponse();
 	}

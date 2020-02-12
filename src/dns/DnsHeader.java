@@ -47,6 +47,7 @@ public class DnsHeader {
 		return this.header;
 	}
 
+	// Parse the header fields based on the response data.
 	public void parseHeader(byte[] header) {
 		this.ID = (short) ((header[0] << 8) | header[1]);
 
@@ -68,6 +69,8 @@ public class DnsHeader {
 		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
 	}
 
+	// Handle the error based on the response code. If code 3 occurs, we output
+	// NOTFOUND instead of throwing an error.
 	public boolean validateRCode() {
 		boolean isCaseThree = false;
 		switch (this.RCODE) {

@@ -6,7 +6,8 @@ import java.nio.ByteBuffer;
 
 public class DnsAnswer {
 	private String NAME, TMPNAME, RDATA;
-	private String TYPE, CLASS;
+	private String TYPE;
+	private short CLASS;
 	private int TTL, RDLENGTH, PREFERENCE;
 	private byte AA;
 	private String output;
@@ -15,6 +16,14 @@ public class DnsAnswer {
 		this.AA = aa;
 	}
 
+	/**
+	 * Parse the answers, authorities, and the additionals based on the response
+	 * data, which have similar format. It also checks if the CLASS is 0x0001. If
+	 * not, it throws a RunTimeException.
+	 * 
+	 * @param startIndex  : the starting index of the answer section.
+	 * @param dnsResponse : the response data.
+	 */
 	public int parseAnswer(int startIndex, byte[] dnsResponse) {
 		int index = getServerNameFromIndex(startIndex, dnsResponse);
 		this.NAME = this.TMPNAME;
@@ -43,7 +52,8 @@ public class DnsAnswer {
 
 		// move to the next two bytes to get class:
 		index += 2;
-		if (dnsResponse[index] != 0 || dnsResponse[index + 1] != 1) {
+		this.CLASS = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
+		if (this.CLASS != 0x0001) {
 			throw new RuntimeException(("ERROR\tThe class field in the response is not 1"));
 		}
 
@@ -54,6 +64,7 @@ public class DnsAnswer {
 		// move to the next four bytes to get rdlength:
 		index += 4;
 		this.RDLENGTH = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
+
 		// move to the next two bytes get rdata:
 		index += 2;
 		switch (this.TYPE) {
@@ -80,11 +91,11 @@ public class DnsAnswer {
 		return index;
 	}
 
-	private String getRDataA(int index, byte[] answers) {
+	private String getRDataA(int index, byte[] dnsResponse) {
 		String rdata = new String();
 		byte[] serverIp = new byte[4];
 		for (int i = 0; i < serverIp.length; i++) {
-			serverIp[i] = answers[index + i];
+			serverIp[i] = dnsResponse[index + i];
 		}
 		try {
 			InetAddress ad = InetAddress.getByAddress(serverIp);
@@ -95,36 +106,59 @@ public class DnsAnswer {
 		return rdata;
 	}
 
-	private int setRDataMX(int index, byte[] answer) {
-		int preference = ByteBuffer.wrap(getByteArrFromIndex(index, 2, answer)).getShort();
+	private int setRDataMX(int index, byte[] dnsResponse) {
+		int preference = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
 		this.PREFERENCE = preference;
-		index = getServerNameFromIndex(index + 2, answer);
+		index = getServerNameFromIndex(index + 2, dnsResponse);
 		this.RDATA = this.TMPNAME;
 		return index;
 	}
 
-	public String getComponentFromIndex(int wordlen, int index, byte[] answer) {
-		String component = "";
-		for (int i = 0; i < wordlen; i++) {
-			component += (char) answer[index + i];
+	public String getComponentFromIndex(int len, int index, byte[] dnsResponse) {
+		StringBuilder component = new StringBuilder();
+		for (int i = 0; i < len; i++) {
+			component.append((char) dnsResponse[index + i]);
 		}
-		return component;
+		return component.toString();
 	}
 
-	public int getServerNameFromIndex(int index, byte[] answer) {
+	/**
+	 * This recursive method handles DNS packet compression. The domain name in the
+	 * message can either be a sequence of labels ending with 0, or a pointer, or a
+	 * sequence of labels ending with a pointer. This method handles all the cases
+	 * by doing recursive calls if a pointer is detected.
+	 * 
+	 * Base case: if the data is 0 which means the length of the word is 0, return
+	 * an empty string.
+	 * 
+	 * Recursive step: if the data is not 0 and it is not a pointer, we get each
+	 * component of the domain name between the dot and return the whole string. If
+	 * the a pointer is found, we calculate the offset and obtain the word
+	 * corresponding to that location. This is done by calling this method
+	 * recursively using the offset.
+	 * 
+	 * @param index
+	 * @param dnsResponse
+	 * @return
+	 */
+	public int getServerNameFromIndex(int index, byte[] dnsResponse) {
+		int currByte = dnsResponse[index];
+		if (currByte == 0) {
+			this.TMPNAME = "";
+			return index;
+		}
 		StringBuilder name = new StringBuilder();
-		int currByte = answer[index];
-		while (currByte != 0) {
+		do {
 			if (!((currByte & 0xC0) == (int) 0xC0)) {
-				name.append(getComponentFromIndex(currByte, index + 1, answer));
+				name.append(getComponentFromIndex(currByte, index + 1, dnsResponse));
 				index += currByte + 1;
-				currByte = answer[index];
+				currByte = dnsResponse[index];
 			} else {
 				byte[] pointerArr = new byte[2];
-				pointerArr[0] = (byte) (answer[index] & 0x3F);
-				pointerArr[1] = answer[index + 1];
+				pointerArr[0] = (byte) (dnsResponse[index] & 0x3F);
+				pointerArr[1] = dnsResponse[index + 1];
 				int pointer = ByteBuffer.wrap(pointerArr).getShort();
-				getServerNameFromIndex(pointer, answer);
+				getServerNameFromIndex(pointer, dnsResponse);
 				name.append(this.TMPNAME);
 				index += 2;
 				currByte = 0;
@@ -132,7 +166,7 @@ public class DnsAnswer {
 			if (currByte != 0) {
 				name.append(".");
 			}
-		}
+		} while (currByte != 0);
 		this.TMPNAME = name.toString();
 		return index;
 	}
