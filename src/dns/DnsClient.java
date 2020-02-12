@@ -49,28 +49,20 @@ public class DnsClient {
 
 	private void parseCmdArguments(String[] args) {
 		for (int i = 0; i < args.length; i++) {
-			switch (args[i]) {
-			case "-t":
+			System.out.println(args[i]);
+			if (args[i].equals("-t")) {
 				timeout = Integer.parseInt(args[i + 1]) * 1000;
-				break;
-			case "-r":
+			} else if (args[i].equals("-r")) {
 				maxRetries = Integer.parseInt(args[i + 1]);
-				break;
-			case "-p":
+			} else if (args[i].equals("-p")) {
 				port = args[i + 1];
-				break;
-			case "-mx":
+			} else if (args[i].equals("-mx")) {
 				serverType = "MX";
-				break;
-			case "-ns":
+			} else if (args[i].equals("-ns")) {
 				serverType = "NS";
-				break;
-			default:
-				if (args[i].contains("@")) {
-					server = args[i].substring(1);
-					name = args[i + 1];
-				}
-				break;
+			} else if (args[i].contains("@")) {
+				server = args[i].substring(1);
+				name = args[i + 1];
 			}
 		}
 	}
@@ -114,7 +106,7 @@ public class DnsClient {
 
 				double deltaTime = (endTime - startTime) / 1000.;
 				System.out
-						.println("Response received after " + deltaTime + " seconds (" + (retryNum-1) + " retries)");
+						.println("Response received after " + deltaTime + " seconds (" + (retryNum - 1) + " retries)");
 
 				byte[] receivedHeader = Arrays.copyOfRange(receivedPacket.getData(), 0, headerSize);
 				byte[] receivedQuestion = Arrays.copyOfRange(receivedPacket.getData(), headerSize,
@@ -133,7 +125,7 @@ public class DnsClient {
 				System.out.println("ERROR\tFailed to create the socket");
 			} catch (SocketTimeoutException e) {
 				System.out.println("ERROR\tTimeout occurred");
-				System.out.println("Retrying the original request (" + (maxRetries-retryNum-1) + " retries left) ... ");
+				System.out.println("Retrying the original request (" + (maxRetries - retryNum) + " retries left) ... ");
 				tryDnsRequest(++retryNum);
 			} catch (IOException e) {
 				System.out.println("ERROR\tThe DNS packet wasn't successfully received");

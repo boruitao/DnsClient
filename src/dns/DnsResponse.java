@@ -47,7 +47,8 @@ public class DnsResponse {
 		System.out.println("");
 		int ancount = header.getANCOUNT();
 		int arcount = header.getARCOUNT();
-		if (ancount <= 0) {
+		boolean isCaseThree = header.validateRCode();
+		if (ancount <= 0 || isCaseThree) {
 			System.out.println("NOTFOUND");
 		} else {
 			System.out.println("***Answer Section (" + ancount + " records)***");

@@ -51,9 +51,9 @@ public class DnsHeader {
 //		for(int i = 0;i <header.length; i++) {
 //			System.out.println(header[i]);
 //		}
-		
+
 		this.ID = (short) ((header[0] << 8) | header[1]);
-		
+
 		this.QR = (byte) ((header[2] >> 7) & 1);
 		if (this.QR == 0) {
 			throw new RuntimeException("ERROR\tUnexpected response: this message is not a response.");
@@ -65,8 +65,6 @@ public class DnsHeader {
 		this.RA = (byte) ((header[3] >> 7) & 1);
 		this.Z = (byte) (((header[3] & 0xff) >>> 4) & 0x07);
 		this.RCODE = (byte) ((header[3] & 0xff) & 0x0f);
-		validateRCode();
-//
 //		System.out.println("");
 //		System.out.println(ID);
 //		System.out.println(QR);
@@ -77,14 +75,15 @@ public class DnsHeader {
 //		System.out.println(RA);
 //		System.out.println(Z);
 //		System.out.println(RCODE);
-		
+
 		this.QDCOUNT = (short) ((header[4] << 8) | header[5]);
 		this.ANCOUNT = (short) ((header[6] << 8) | header[7]);
 		this.NSCOUNT = (short) ((header[8] << 8) | header[9]);
 		this.ARCOUNT = (short) ((header[10] << 8) | header[11]);
 	}
 
-	private void validateRCode() {
+	public boolean validateRCode() {
+		boolean isCaseThree = false;
 		switch (this.RCODE) {
 		case 0:
 			break;
@@ -94,13 +93,16 @@ public class DnsHeader {
 			throw new RuntimeException(
 					"Server failure: the name server was unable to process this query due to a problem with the name server");
 		case 3:
-			throw new RuntimeException("The domain name referenced in the query does not exist");
+			// throw new RuntimeException("The domain name referenced in the query does not
+			// exist");
+			isCaseThree = true;
 		case 4:
 			throw new RuntimeException("Not implemented: the name server does not support the requested kind of query");
 		case 5:
 			throw new RuntimeException(
 					"Refused: the name server refuses to perform the requested operation for policy reasons");
 		}
+		return isCaseThree;
 	}
 
 	public short getANCOUNT() {
