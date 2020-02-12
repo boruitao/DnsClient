@@ -31,7 +31,7 @@ public class DnsClient {
 	public static void main(String[] args) {
 		DnsClient dnsClient = new DnsClient();
 		dnsClient.getCmdArguments(args);
-		dnsClient.createDnsRequest(1);
+		dnsClient.createDnsRequest(0);
 	}
 
 	public void getCmdArguments(String[] args) {
@@ -49,7 +49,6 @@ public class DnsClient {
 
 	private void parseCmdArguments(String[] args) {
 		for (int i = 0; i < args.length; i++) {
-			System.out.println(args[i]);
 			if (args[i].equals("-t")) {
 				timeout = Integer.parseInt(args[i + 1]) * 1000;
 			} else if (args[i].equals("-r")) {
@@ -75,66 +74,65 @@ public class DnsClient {
 	}
 
 	public void tryDnsRequest(int retryNum) {
-		if (retryNum <= maxRetries) {
-			InetAddress serverIpAddress = getServerIPAddress();
-			try {
-				DatagramSocket socket = new DatagramSocket();
-				socket.setSoTimeout(timeout);
+		InetAddress serverIpAddress = getServerIPAddress();
+		try {
+			DatagramSocket socket = new DatagramSocket();
+			socket.setSoTimeout(timeout);
 
-				Random id = new Random(Short.MAX_VALUE + 1);
-				DnsHeader packetHeader = new DnsHeader((short) id.nextInt(), (byte) 0, (byte) 0, (byte) 0, (byte) 0,
-						(byte) 1, (byte) 0, (byte) 0, (byte) 0, (short) 1, (short) 0, (short) 0, (short) 0);
-				int headerSize = packetHeader.getHeader().length;
+			Random id = new Random(Short.MAX_VALUE + 1);
+			DnsHeader packetHeader = new DnsHeader((short) id.nextInt(), (byte) 0, (byte) 0, (byte) 0, (byte) 0,
+					(byte) 1, (byte) 0, (byte) 0, (byte) 0, (short) 1, (short) 0, (short) 0, (short) 0);
+			int headerSize = packetHeader.getHeader().length;
 
-				DnsQuestion question = new DnsQuestion(name, serverType);
-				int questionSize = question.getQuestion().length;
+			DnsQuestion question = new DnsQuestion(name, serverType);
+			int questionSize = question.getQuestion().length;
 
-				ByteBuffer requestData = ByteBuffer.allocate(headerSize + questionSize);
-				requestData.put(packetHeader.getHeader());
-				requestData.put(question.getQuestion());
-				byte[] responseData = new byte[MAX_DNS_PACKET_SIZE];
+			ByteBuffer requestData = ByteBuffer.allocate(headerSize + questionSize);
+			requestData.put(packetHeader.getHeader());
+			requestData.put(question.getQuestion());
+			byte[] responseData = new byte[MAX_DNS_PACKET_SIZE];
 
-				DatagramPacket sentPacket = new DatagramPacket(requestData.array(), requestData.array().length,
-						serverIpAddress, Integer.parseInt(port));
-				DatagramPacket receivedPacket = new DatagramPacket(responseData, responseData.length);
+			DatagramPacket sentPacket = new DatagramPacket(requestData.array(), requestData.array().length,
+					serverIpAddress, Integer.parseInt(port));
+			DatagramPacket receivedPacket = new DatagramPacket(responseData, responseData.length);
 
-				long startTime = System.currentTimeMillis();
-				socket.send(sentPacket);
-				socket.receive(receivedPacket);
-				long endTime = System.currentTimeMillis();
-				socket.close();
+			long startTime = System.currentTimeMillis();
+			socket.send(sentPacket);
+			socket.receive(receivedPacket);
+			long endTime = System.currentTimeMillis();
+			socket.close();
 
-				double deltaTime = (endTime - startTime) / 1000.;
-				System.out
-						.println("Response received after " + deltaTime + " seconds (" + (retryNum - 1) + " retries)");
+			double deltaTime = (endTime - startTime) / 1000.;
+			System.out.println("Response received after " + deltaTime + " seconds (" + retryNum + " retries)");
 
-				byte[] receivedHeader = Arrays.copyOfRange(receivedPacket.getData(), 0, headerSize);
-				byte[] receivedQuestion = Arrays.copyOfRange(receivedPacket.getData(), headerSize,
-						headerSize + questionSize);
+			byte[] receivedHeader = Arrays.copyOfRange(receivedPacket.getData(), 0, headerSize);
+			byte[] receivedQuestion = Arrays.copyOfRange(receivedPacket.getData(), headerSize,
+					headerSize + questionSize);
 
-				packetHeader.parseHeader(receivedHeader);
-				question.parseQuestion(receivedQuestion);
-				if (!question.getQTYPE().equals(serverType)) {
-					throw new RuntimeException("ERROR\tResponse query is not consistent with the original request");
-				}
-
-				DnsResponse response = new DnsResponse(receivedPacket.getData(), packetHeader, question,
-						headerSize + questionSize);
-				response.printResponseOutput();
-			} catch (SocketException e) {
-				System.out.println("ERROR\tFailed to create the socket");
-			} catch (SocketTimeoutException e) {
-				System.out.println("ERROR\tTimeout occurred");
-				System.out.println("Retrying the original request (" + (maxRetries - retryNum) + " retries left) ... ");
-				tryDnsRequest(++retryNum);
-			} catch (IOException e) {
-				System.out.println("ERROR\tThe DNS packet wasn't successfully received");
+			packetHeader.parseHeader(receivedHeader);
+			question.parseQuestion(receivedQuestion);
+			if (!question.getQTYPE().equals(serverType)) {
+				throw new RuntimeException("ERROR\tResponse query is not consistent with the original request");
 			}
 
-		} else {
-			System.out.println("ERROR\tMaximum number of retries " + maxRetries + " exceeded");
-			return;
+			DnsResponse response = new DnsResponse(receivedPacket.getData(), packetHeader, question,
+					headerSize + questionSize);
+			response.printResponseOutput();
+		} catch (SocketException e) {
+			System.out.println("ERROR\tFailed to create the socket");
+		} catch (SocketTimeoutException e) {
+			System.out.println("ERROR\tTimeout occurred");
+			if (maxRetries >= ++retryNum) {
+				System.out.println("Retrying the original request (" + (maxRetries - retryNum) + " retries left) ... ");
+				tryDnsRequest(retryNum);
+			} else {
+				System.out.println("ERROR\tMaximum number of retries " + maxRetries + " exceeded");
+				return;
+			}
+		} catch (IOException e) {
+			System.out.println("ERROR\tThe DNS packet wasn't successfully received");
 		}
+
 	}
 
 	public InetAddress getServerIPAddress() {
