@@ -153,6 +153,8 @@ public class DnsAnswer {
 				name.append(getComponentFromIndex(currByte, index + 1, dnsResponse));
 				index += currByte + 1;
 				currByte = dnsResponse[index];
+				if (currByte == 0)
+					index++;
 			} else {
 				byte[] pointerArr = new byte[2];
 				pointerArr[0] = (byte) (dnsResponse[index] & 0x3F);
