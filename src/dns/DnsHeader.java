@@ -53,7 +53,7 @@ public class DnsHeader {
 
 		this.QR = (byte) ((header[2] >> 7) & 1);
 		if (this.QR == 0) {
-			throw new RuntimeException("ERROR\tUnexpected response: this message is not a response.");
+			throw new RuntimeException("\nERROR\tUnexpected response: this message is not a response.");
 		}
 		this.OPCODE = (byte) (((header[2] & 0xff) >>> 3) & 0x0f);
 		this.AA = (byte) ((header[2] >> 2) & 1);

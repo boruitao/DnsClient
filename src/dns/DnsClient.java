@@ -51,11 +51,11 @@ public class DnsClient {
 			parseCmdArguments(args);
 			if (server == null || name == null) {
 				throw new IllegalArgumentException(
-						"ERROR\tIncorrect input syntax: server IP address or domain name is missing.");
+						"\nERROR\tIncorrect input syntax: server IP address or domain name is missing.");
 			}
 		} catch (Exception e) {
 			throw new IllegalArgumentException(
-					"ERROR\tIncorrect input syntax: Please use the following Syntax: [-t timeout] [-r max-retries] [-p port] [-mx|-ns] @server name.");
+					"\nERROR\tIncorrect input syntax: Please use the following Syntax: [-t timeout] [-r max-retries] [-p port] [-mx|-ns] @server name.");
 		}
 	}
 
@@ -139,24 +139,24 @@ public class DnsClient {
 			packetHeader.parseHeader(receivedHeader);
 			question.parseQuestion(receivedQuestion);
 			if (!question.getQTYPE().equals(requestType)) {
-				throw new RuntimeException("ERROR\tResponse type is not consistent with the original request");
+				throw new RuntimeException("\nERROR\tResponse type is not consistent with the original request");
 			}
 
 			DnsResponse response = new DnsResponse(receivedPacket.getData(), packetHeader, headerSize + questionSize);
 			response.printResponseOutput();
 		} catch (SocketException e) {
-			System.out.println("ERROR\tFailed to create the socket");
+			System.out.println("\nERROR\tFailed to create the socket");
 		} catch (SocketTimeoutException e) {
-			System.out.println("ERROR\tTimeout occurred");
+			System.out.println("\nERROR\tTimeout occurred");
 			if (maxRetries >= ++retryNum) {
 				System.out.println("Retrying the original request (" + (maxRetries - retryNum) + " retries left) ... ");
 				tryDnsRequest(retryNum);
 			} else {
-				System.out.println("ERROR\tMaximum number of retries " + maxRetries + " exceeded");
+				System.out.println("\nERROR\tMaximum number of retries " + maxRetries + " exceeded");
 				return;
 			}
 		} catch (IOException e) {
-			System.out.println("ERROR\tThe DNS packet wasn't successfully received");
+			System.out.println("\nERROR\tThe DNS packet wasn't successfully received");
 		}
 
 	}
@@ -173,16 +173,16 @@ public class DnsClient {
 			for (int i = 0; i < ipComponents.length; i++) {
 				int ip = Integer.parseInt(ipComponents[i]);
 				if (ip < 0 || ip > 255) {
-					throw new NumberFormatException("ERROR\tEach of the IP component must be <= 255 and >= 0");
+					throw new NumberFormatException("\nERROR\tEach of the IP component must be <= 255 and >= 0");
 				}
 				serverAddress[i] = (byte) ip;
 			}
 			serverIpAddress = InetAddress.getByAddress(serverAddress);
 		} catch (UnknownHostException e) {
-			System.out.println("ERROR\tThe IP address cannot be resolved in the sender");
+			System.out.println("\nERROR\tThe IP address cannot be resolved in the sender");
 
 		} catch (NullPointerException f) {
-			System.out.println("ERROR\tThe IP address is missing entries");
+			System.out.println("\nERROR\tThe IP address is missing entries");
 		}
 		return serverIpAddress;
 	}

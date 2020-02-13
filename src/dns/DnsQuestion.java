@@ -22,7 +22,7 @@ public class DnsQuestion {
 			try {
 				dnsQuestion.put(components[i].getBytes("UTF-8"));
 			} catch (UnsupportedEncodingException e) {
-				System.out.println("ERROR\tThe specified char cannot be encoded");
+				System.out.println("\nERROR\tThe specified char cannot be encoded");
 			}
 		}
 

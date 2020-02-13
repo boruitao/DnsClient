@@ -47,14 +47,14 @@ public class DnsAnswer {
 				break;
 			}
 		} else {
-			System.out.println("ERROR\tUnrecognized response type");
+			System.out.println("\nERROR \tUnrecognized response type");
 		}
 
 		// move to the next two bytes to get class:
 		index += 2;
 		this.CLASS = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
 		if (this.CLASS != 0x0001) {
-			throw new RuntimeException(("ERROR\tThe class field in the response is not 1"));
+			throw new RuntimeException(("\nERROR \tThe class field in the response is not 1"));
 		}
 
 		// move to the next two bytes to get ttl:
@@ -101,7 +101,7 @@ public class DnsAnswer {
 			InetAddress ad = InetAddress.getByAddress(serverIp);
 			rdata = ad.toString().substring(1);
 		} catch (UnknownHostException e) {
-			System.out.println("ERROR\tThe IP address cannot be resolved in the response");
+			System.out.println("\nERROR \tThe IP address cannot be resolved in the response");
 		}
 		return rdata;
 	}
