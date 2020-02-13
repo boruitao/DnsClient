@@ -51,7 +51,7 @@ public class DnsClient {
 			parseCmdArguments(args);
 			if (server == null || name == null) {
 				throw new IllegalArgumentException(
-						"ERROR\tIncorrect input syntax: server ID or domain name is missing.");
+						"ERROR\tIncorrect input syntax: server IP address or domain name is missing.");
 			}
 		} catch (Exception e) {
 			throw new IllegalArgumentException(
@@ -173,7 +173,7 @@ public class DnsClient {
 			for (int i = 0; i < ipComponents.length; i++) {
 				int ip = Integer.parseInt(ipComponents[i]);
 				if (ip < 0 || ip > 255) {
-					throw new NumberFormatException("ERROR\tThe IP value must be <= 225 and >= 0");
+					throw new NumberFormatException("ERROR\tEach of the IP component must be <= 255 and >= 0");
 				}
 				serverAddress[i] = (byte) ip;
 			}
@@ -182,7 +182,7 @@ public class DnsClient {
 			System.out.println("ERROR\tThe IP address cannot be resolved in the sender");
 
 		} catch (NullPointerException f) {
-			System.out.println("ERROR\tThe IP Address is missing entries");
+			System.out.println("ERROR\tThe IP address is missing entries");
 		}
 		return serverIpAddress;
 	}
