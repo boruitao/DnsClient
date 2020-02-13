@@ -55,7 +55,7 @@ public class DnsClient {
 			}
 		} catch (Exception e) {
 			throw new IllegalArgumentException(
-					"\nERROR\nIncorrect input syntax: Please use the following Syntax: [-t timeout] [-r max-retries] [-p port] [-mx|-ns] @server name.");
+					"\nERROR\tIncorrect input syntax: Please use the following Syntax: [-t timeout] [-r max-retries] [-p port] [-mx|-ns] @server name.");
 		}
 	}
 
