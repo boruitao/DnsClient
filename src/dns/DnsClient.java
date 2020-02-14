@@ -68,9 +68,17 @@ public class DnsClient {
 			} else if (args[i].equals("-p")) {
 				port = args[i + 1];
 			} else if (args[i].equals("-mx")) {
-				requestType = "MX";
+				if (requestType.equals(DEFAULT_REQUEST_TYPE))
+					requestType = "MX";
+				else
+					throw new IllegalArgumentException(
+							"\nERROR\tIncorrect input syntax: cannot have both -mx and -ns flags in the arguments");
 			} else if (args[i].equals("-ns")) {
-				requestType = "NS";
+				if (requestType.equals(DEFAULT_REQUEST_TYPE))
+					requestType = "NS";
+				else
+					throw new IllegalArgumentException(
+							"\nERROR\tIncorrect input syntax: cannot have both -mx and -ns flags in the arguments");
 			} else if (args[i].contains("@")) {
 				server = args[i].substring(1);
 				name = args[i + 1];

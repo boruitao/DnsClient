@@ -70,25 +70,24 @@ public class DnsAnswer {
 		switch (this.TYPE) {
 		case "A":
 			this.RDATA = getRDataA(curIndex, dnsResponse);
-			curIndex += 4;
 			setOutput("IP");
 			break;
 		case "NS":
-			curIndex = getServerNameFromIndex(curIndex, dnsResponse);
+			getServerNameFromIndex(curIndex, dnsResponse);
 			this.RDATA = this.TMPNAME;
 			setOutput("NS");
 			break;
 		case "MX":
-			curIndex = setRDataMX(curIndex, dnsResponse);
+			setRDataMX(curIndex, dnsResponse);
 			setOutput("MX");
 			break;
 		case "CNAME":
-			curIndex = getServerNameFromIndex(curIndex, dnsResponse);
+			getServerNameFromIndex(curIndex, dnsResponse);
 			this.RDATA = this.TMPNAME;
 			setOutput("CNAME");
 			break;
 		}
-		return curIndex;
+		return curIndex + this.RDLENGTH;
 	}
 
 	private String getRDataA(int index, byte[] dnsResponse) {
@@ -193,6 +192,10 @@ public class DnsAnswer {
 
 	public String getOutput() {
 		return this.output;
+	}
+
+	public String getTYPE() {
+		return this.TYPE;
 	}
 
 	public byte[] getByteArrFromIndex(int index, int len, byte[] response) {
