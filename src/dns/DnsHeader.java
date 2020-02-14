@@ -77,17 +77,17 @@ public class DnsHeader {
 		case 0:
 			break;
 		case 1:
-			throw new RuntimeException("Format error: the name server was unable to interpret the query");
+			throw new RuntimeException("\nERROR\tFormat error: the name server was unable to interpret the query");
 		case 2:
 			throw new RuntimeException(
-					"Server failure: the name server was unable to process this query due to a problem with the name server");
+					"\nERROR\tServer failure: the name server was unable to process this query due to a problem with the name server");
 		case 3:
 			isCaseThree = true;
 		case 4:
-			throw new RuntimeException("Not implemented: the name server does not support the requested kind of query");
+			throw new RuntimeException("\nERROR\tNot implemented: the name server does not support the requested kind of query");
 		case 5:
 			throw new RuntimeException(
-					"Refused: the name server refuses to perform the requested operation for policy reasons");
+					"\nERROR\tRefused: the name server refuses to perform the requested operation for policy reasons");
 		}
 		return isCaseThree;
 	}

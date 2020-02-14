@@ -25,11 +25,11 @@ public class DnsAnswer {
 	 * @param dnsResponse : the response data.
 	 */
 	public int parseAnswer(int startIndex, byte[] dnsResponse) {
-		int index = getServerNameFromIndex(startIndex, dnsResponse);
+		int curIndex = getServerNameFromIndex(startIndex, dnsResponse);
 		this.NAME = this.TMPNAME;
 		// get type:
-		if (dnsResponse[index] == 0) {
-			switch (dnsResponse[index + 1]) {
+		if (dnsResponse[curIndex] == 0) {
+			switch (dnsResponse[curIndex + 1]) {
 			case 1:
 				this.TYPE = "A";
 				break;
@@ -51,44 +51,44 @@ public class DnsAnswer {
 		}
 
 		// move to the next two bytes to get class:
-		index += 2;
-		this.CLASS = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
+		curIndex += 2;
+		this.CLASS = ByteBuffer.wrap(getByteArrFromIndex(curIndex, 2, dnsResponse)).getShort();
 		if (this.CLASS != 0x0001) {
 			throw new RuntimeException(("\nERROR \tThe class field in the response is not 1"));
 		}
 
 		// move to the next two bytes to get ttl:
-		index += 2;
-		this.TTL = ByteBuffer.wrap(getByteArrFromIndex(index, 4, dnsResponse)).getInt();
+		curIndex += 2;
+		this.TTL = ByteBuffer.wrap(getByteArrFromIndex(curIndex, 4, dnsResponse)).getInt();
 
 		// move to the next four bytes to get rdlength:
-		index += 4;
-		this.RDLENGTH = ByteBuffer.wrap(getByteArrFromIndex(index, 2, dnsResponse)).getShort();
+		curIndex += 4;
+		this.RDLENGTH = ByteBuffer.wrap(getByteArrFromIndex(curIndex, 2, dnsResponse)).getShort();
 
 		// move to the next two bytes get rdata:
-		index += 2;
+		curIndex += 2;
 		switch (this.TYPE) {
 		case "A":
-			this.RDATA = getRDataA(index, dnsResponse);
-			index += 4;
+			this.RDATA = getRDataA(curIndex, dnsResponse);
+			curIndex += 4;
 			setOutput("IP");
 			break;
 		case "NS":
-			index = getServerNameFromIndex(index, dnsResponse);
+			curIndex = getServerNameFromIndex(curIndex, dnsResponse);
 			this.RDATA = this.TMPNAME;
 			setOutput("NS");
 			break;
 		case "MX":
-			index = setRDataMX(index, dnsResponse);
+			curIndex = setRDataMX(curIndex, dnsResponse);
 			setOutput("MX");
 			break;
 		case "CNAME":
-			index = getServerNameFromIndex(index, dnsResponse);
+			curIndex = getServerNameFromIndex(curIndex, dnsResponse);
 			this.RDATA = this.TMPNAME;
 			setOutput("CNAME");
 			break;
 		}
-		return index;
+		return curIndex;
 	}
 
 	private String getRDataA(int index, byte[] dnsResponse) {

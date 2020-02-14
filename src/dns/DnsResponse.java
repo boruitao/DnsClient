@@ -43,7 +43,7 @@ public class DnsResponse {
 		}
 
 		for (int i = 0; i < additionals.length; i++) {
-			answers[i] = new DnsAnswer(header.getAA());
+			additionals[i] = new DnsAnswer(header.getAA());
 			index = additionals[i].parseAnswer(index, dnsResponse);
 		}
 	}
